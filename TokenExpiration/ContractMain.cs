@@ -123,16 +123,16 @@ namespace TransfairExpiration
 
                 return Lend(from, to, tokenId, duration);
             }
-            else if(operation == "isLendActive")
+            else if (operation == "isLendActive")
             {
                 if (args.Length != 1)
                 {
                     return false;
                 }
                 return IsLendActive((byte[])args[0]);
-                
+
             }
-            else if(operation == "returnToOwner")
+            else if (operation == "returnToOwner")
             {
                 if (args.Length != 1)
                 {
@@ -141,13 +141,13 @@ namespace TransfairExpiration
 
                 byte[] tokenId = (byte[])args[0];
                 bool isActive = IsLendActive(tokenId);
-
-                if(!isActive)
+                Runtime.Notify("return is active", isActive);
+                if (!isActive)
                 {
-                    byte[] owner = OwnerOf(tokenId);
-                    object[] rawToken = GetTokenAsObjects(tokenId);
-                    TokenInfo token = (TokenInfo)(object)rawToken;
+                    TokenInfo token = DataAccess.GetToken(tokenId);
 
+                    byte[] owner = OwnerOf(tokenId);
+                    Runtime.Notify("origownerreturn", token.OriginalOwner, owner);
                     if (Runtime.CheckWitness(token.Owner) || Runtime.CheckWitness(token.OriginalOwner))
                         Transfer(owner, token.OriginalOwner, tokenId);
                 }
@@ -157,9 +157,8 @@ namespace TransfairExpiration
 
         static bool IsLendActive(byte[] tokenId)
         {
-            object[] rawToken = GetTokenAsObjects(tokenId);
-            TokenInfo token = (TokenInfo)(object)rawToken;
-
+            TokenInfo token = DataAccess.GetToken(tokenId);
+          
             var nowtime = Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp;
             if (nowtime > token.LendExpiration)
             {
@@ -196,7 +195,7 @@ namespace TransfairExpiration
 
         private static string TokenURI(BigInteger tokenId) => "uri/" + tokenId;
 
-        private static BigInteger BalanceOf(byte[] owner) => 
+        private static BigInteger BalanceOf(byte[] owner) =>
             Storage.Get(Storage.CurrentContext, Keys.AddressBalanceKey(owner)).AsBigInteger();
 
         /// <summary>
@@ -204,8 +203,7 @@ namespace TransfairExpiration
         /// </summary>
         private static byte[] OwnerOf(byte[] tokenIdAsByteArray)
         {
-            byte[] key = Keys.Token(tokenIdAsByteArray);
-            var token = DataAccess.GetToken(key);
+            TokenInfo token = DataAccess.GetToken(tokenIdAsByteArray);
             if (token != null && token.Owner.Length > 0)
             {
                 return token.Owner;
@@ -294,10 +292,6 @@ namespace TransfairExpiration
             }
 
             var token = DataAccess.GetToken(tokenId);
-            if (token == null)
-            {
-                return false;
-            }
 
             if (from != token.Owner)
             {
@@ -308,22 +302,18 @@ namespace TransfairExpiration
 
             DataAccess.SetToken(tokenId, token);
             DataAccess.RemoveApproval(tokenId);
+
+            var index = DataAccess.IncreaseAddressBalance(to);
+            DataAccess.SetNextTokenOfOwner(to, index, tokenId.AsBigInteger());
+
+            DataAccess.DecreaseAddressBalance(from); //TODO: fix decrease
+            //TODO: set last token of from address at the free space of the lent token (in the owner.index storage)
+            
             Events.RaiseTransfer(from, to, tokenId);
 
             return true;
         }
 
-        public static object[] GetTokenAsObjects(byte[] id)
-        {
-            byte[] key = Keys.Token(id);
-            byte[] bytes = Storage.Get(Storage.CurrentContext, id);
-            if (bytes.Length == 0)
-            {
-                return new object[0];
-            }
-
-            return (object[])Neo.SmartContract.Framework.Helper.Deserialize(bytes);
-        }
 
         public static bool Lend(byte[] from, byte[] to, byte[] tokenId, BigInteger expiration)
         {
@@ -331,31 +321,37 @@ namespace TransfairExpiration
             {
                 return false;
             }
-            if (from == to)
-            {
-                return false;
-            }
+            //if (from == to)
+            //{
+            //    return true;
+            //}
 
             var token = DataAccess.GetToken(tokenId);
-            if (token == null)
-            {
-                return false;
-            }
+            Runtime.Notify("token", token.OriginalOwner);
             if (from != token.Owner)
             {
                 return false;
             }
+            Runtime.Notify("check witness");
 
             if (!Runtime.CheckWitness(token.OriginalOwner))
                 return false;
 
             var nowtime = Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp;
+            Runtime.Notify("now", nowtime);
             token.LendExpiration = expiration + nowtime;
             token.Owner = to;
+            Runtime.Notify("done", nowtime);
 
             DataAccess.SetToken(tokenId, token);
             DataAccess.RemoveApproval(tokenId);
-            Events.RaiseLend(from, to, tokenId, expiration);
+            //TODO: REPLACE WITH TRANSFER
+            var index = DataAccess.IncreaseAddressBalance(to);
+            DataAccess.SetNextTokenOfOwner(to, index, tokenId.AsBigInteger());
+
+            DataAccess.DecreaseAddressBalance(from);
+
+            Events.RaiseTransfer(from, to, tokenId);
 
             return true;
         }

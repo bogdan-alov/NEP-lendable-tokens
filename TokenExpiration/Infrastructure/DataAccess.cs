@@ -14,7 +14,7 @@ namespace TransfairExpiration
         public static TokenInfo GetToken(byte[] id)
         {
             byte[] key = Keys.Token(id);
-            byte[] bytes = Storage.Get(Storage.CurrentContext, id);
+            byte[] bytes = Storage.Get(Storage.CurrentContext, key);
             if (bytes.Length == 0)
             {
                 return null;
@@ -64,6 +64,25 @@ namespace TransfairExpiration
 
             Storage.Put(Storage.CurrentContext, key, currentBalance.AsByteArray());
             return currentBalance;
+        }
+
+        public static void DecreaseAddressBalance(byte[] address)
+        {
+            byte[] key = Keys.AddressBalanceKey(address);
+            byte[] currentBalanceBytes = Storage.Get(Storage.CurrentContext, key);
+            BigInteger currentBalance = 0;
+            if (currentBalanceBytes.Length != 0)
+            {
+                currentBalance = currentBalanceBytes.AsBigInteger();
+            }
+
+            currentBalance -= 1;
+            if (currentBalance < 0)
+            {
+                currentBalance = 0;
+            }
+
+            Storage.Put(Storage.CurrentContext, address, currentBalance.AsByteArray());
         }
 
         public static void RemoveApproval(byte[] tokenId)
