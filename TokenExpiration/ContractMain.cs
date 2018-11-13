@@ -29,7 +29,7 @@ namespace TransfairExpiration
                 }
                 byte[] owner = (byte[])args[0];
 
-                return CreateToken(owner);
+                return MintToken(owner);
             }
             else if (operation == "symbol")
             {
@@ -45,9 +45,7 @@ namespace TransfairExpiration
             }
             else if (operation == "ownerOf")
             {
-                BigInteger tokenId = (BigInteger)args[0];
-
-                return OwnerOf(tokenId);
+                return OwnerOf((byte[])args[0]);
             }
             else if (operation == "tokenURI")
             {
@@ -81,7 +79,7 @@ namespace TransfairExpiration
 
                 byte[] from = (byte[])args[0];
                 byte[] to = (byte[])args[1];
-                BigInteger tokenId = (BigInteger)args[2];
+                byte[] tokenId = (byte[])args[2];
 
                 if (!Runtime.CheckWitness(from))
                 {
@@ -105,7 +103,7 @@ namespace TransfairExpiration
 
                 byte[] from = (byte[])args[0];
                 byte[] to = (byte[])args[1];
-                BigInteger tokenId = (BigInteger)args[2];
+                byte[] tokenId = (byte[])args[2];
 
                 if (!Runtime.CheckWitness(from))
                 {
@@ -131,7 +129,7 @@ namespace TransfairExpiration
                 {
                     return false;
                 }
-                return IsLendActive((BigInteger)args[0]);
+                return IsLendActive((byte[])args[0]);
                 
             }
             else if(operation == "returnToOwner")
@@ -141,13 +139,13 @@ namespace TransfairExpiration
                     return false;
                 }
 
-                BigInteger tokenId = (BigInteger)args[0];
+                byte[] tokenId = (byte[])args[0];
                 bool isActive = IsLendActive(tokenId);
 
                 if(!isActive)
                 {
                     byte[] owner = OwnerOf(tokenId);
-                    object[] rawToken = GetTokenAsObjects(tokenId.AsByteArray());
+                    object[] rawToken = GetTokenAsObjects(tokenId);
                     TokenInfo token = (TokenInfo)(object)rawToken;
 
                     if (Runtime.CheckWitness(token.Owner) || Runtime.CheckWitness(token.OriginalOwner))
@@ -157,9 +155,9 @@ namespace TransfairExpiration
             return false;
         }
 
-        static bool IsLendActive(BigInteger tokenId)
+        static bool IsLendActive(byte[] tokenId)
         {
-            object[] rawToken = GetTokenAsObjects(tokenId.AsByteArray());
+            object[] rawToken = GetTokenAsObjects(tokenId);
             TokenInfo token = (TokenInfo)(object)rawToken;
 
             var nowtime = Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp;
@@ -204,9 +202,9 @@ namespace TransfairExpiration
         /// <summary>
         /// Get the token owner address
         /// </summary>
-        private static byte[] OwnerOf(BigInteger tokenId)
+        private static byte[] OwnerOf(byte[] tokenIdAsByteArray)
         {
-            var token = DataAccess.GetToken(tokenId.AsByteArray());
+            var token = DataAccess.GetToken(tokenIdAsByteArray);
             if (token != null && token.Owner.Length > 0)
             {
                 return token.Owner;
@@ -243,7 +241,7 @@ namespace TransfairExpiration
         /// <summary>
         /// Generate new token data and record
         /// </summary>
-        public static BigInteger CreateToken(byte[] owner)
+        public static BigInteger MintToken(byte[] owner)
         {
             if (owner.Length != 20)
             {
@@ -271,7 +269,9 @@ namespace TransfairExpiration
 
             DataAccess.SetToken(tokenId, token);
             DataAccess.SetTotalSupply(tokenId);
-            DataAccess.IncreaseAddressBalance(owner);
+
+            BigInteger index = DataAccess.IncreaseAddressBalance(owner);
+            DataAccess.SetNextTokenOfOwner(owner, index, nextTokenId);
 
             return tokenId.AsBigInteger();
         }
@@ -280,7 +280,7 @@ namespace TransfairExpiration
         /// <summary>
         /// Transfer the token ownership
         /// </summary>
-        public static bool Transfer(byte[] from, byte[] to, BigInteger tokenId)
+        public static bool Transfer(byte[] from, byte[] to, byte[] tokenId)
         {
             if (from.Length != 20 || to.Length != 20)
             {
@@ -292,7 +292,7 @@ namespace TransfairExpiration
                 return true;
             }
 
-            var token = DataAccess.GetToken(tokenId.AsByteArray());
+            var token = DataAccess.GetToken(tokenId);
             if (token == null)
             {
                 return false;
@@ -305,8 +305,8 @@ namespace TransfairExpiration
 
             token.Owner = to;
 
-            DataAccess.SetToken(tokenId.AsByteArray(), token);
-            DataAccess.RemoveApproval(tokenId.AsByteArray());
+            DataAccess.SetToken(tokenId, token);
+            DataAccess.RemoveApproval(tokenId);
             Events.RaiseTransfer(from, to, tokenId);
 
             return true;
@@ -324,7 +324,7 @@ namespace TransfairExpiration
             return (object[])Neo.SmartContract.Framework.Helper.Deserialize(bytes);
         }
 
-        public static bool Lend(byte[] from, byte[] to, BigInteger tokenId, BigInteger expiration)
+        public static bool Lend(byte[] from, byte[] to, byte[] tokenId, BigInteger expiration)
         {
             if (from.Length != 20 || to.Length != 20)
             {
@@ -335,7 +335,7 @@ namespace TransfairExpiration
                 return true;
             }
 
-            var token = DataAccess.GetToken(tokenId.AsByteArray());
+            var token = DataAccess.GetToken(tokenId);
             if (token == null)
             {
                 return false;
@@ -352,8 +352,8 @@ namespace TransfairExpiration
             token.LendExpiration = expiration + nowtime;
             token.Owner = to;
 
-            DataAccess.SetToken(tokenId.AsByteArray(), token);
-            DataAccess.RemoveApproval(tokenId.AsByteArray());
+            DataAccess.SetToken(tokenId, token);
+            DataAccess.RemoveApproval(tokenId);
             Events.RaiseTransfer(from, to, tokenId);
 
             return true;

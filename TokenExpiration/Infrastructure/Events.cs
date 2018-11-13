@@ -11,10 +11,12 @@ namespace TransfairExpiration
 {
     public class Events : SmartContract
     {
-        public delegate void deleTransfer(byte[] from, byte[] to, BigInteger value);
+        public delegate void deleTransfer(byte[] from, byte[] to, byte[] value);
+
         [DisplayName("transfer")]
         public static event deleTransfer Transferred;
-        public static void RaiseTransfer(byte[] from, byte[] to, BigInteger value) => Transferred(from, to, value);
+
+        public static void RaiseTransfer(byte[] from, byte[] to, byte[] value) => Transferred(from, to, value);
         public delegate void deleApproved(byte[] owner, byte[] approved, BigInteger tokenId);
         [DisplayName("approve")]
         public static event deleApproved Approved;

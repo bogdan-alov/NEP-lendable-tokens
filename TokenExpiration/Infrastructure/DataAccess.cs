@@ -50,7 +50,7 @@ namespace TransfairExpiration
             Storage.Put(Storage.CurrentContext, key, bytes);
         }
 
-        public static void IncreaseAddressBalance(byte[] address)
+        public static BigInteger IncreaseAddressBalance(byte[] address)
         {
             byte[] key = Keys.AddressBalanceKey(address);
             byte[] currentBalanceBytes = Storage.Get(Storage.CurrentContext, key);
@@ -61,13 +61,21 @@ namespace TransfairExpiration
             }
 
             currentBalance += 1;
-            Storage.Put(Storage.CurrentContext, address, currentBalance.AsByteArray());
+
+            Storage.Put(Storage.CurrentContext, key, currentBalance.AsByteArray());
+            return currentBalance;
         }
 
         public static void RemoveApproval(byte[] tokenId)
         {
             byte[] key = Keys.Approval(tokenId);
             Storage.Delete(Storage.CurrentContext, key);
+        }
+
+        public static void SetNextTokenOfOwner(byte[] owner, BigInteger index, BigInteger tokenId)
+        {
+            byte[] key = Keys.TokenOfOwner(owner, index);
+            Storage.Put(Storage.CurrentContext, key, tokenId);
         }
     }
 }
