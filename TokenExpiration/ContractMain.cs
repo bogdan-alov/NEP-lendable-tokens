@@ -332,7 +332,7 @@ namespace TransfairExpiration
             }
             if (from == to)
             {
-                return true;
+                return false;
             }
 
             var token = DataAccess.GetToken(tokenId);
@@ -354,7 +354,7 @@ namespace TransfairExpiration
 
             DataAccess.SetToken(tokenId, token);
             DataAccess.RemoveApproval(tokenId);
-            Events.RaiseTransfer(from, to, tokenId);
+            Events.RaiseLend(from, to, tokenId, expiration);
 
             return true;
         }
