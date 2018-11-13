@@ -204,7 +204,8 @@ namespace TransfairExpiration
         /// </summary>
         private static byte[] OwnerOf(byte[] tokenIdAsByteArray)
         {
-            var token = DataAccess.GetToken(tokenIdAsByteArray);
+            byte[] key = Keys.Token(tokenIdAsByteArray);
+            var token = DataAccess.GetToken(key);
             if (token != null && token.Owner.Length > 0)
             {
                 return token.Owner;
