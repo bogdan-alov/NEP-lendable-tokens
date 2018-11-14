@@ -351,7 +351,7 @@ namespace TransfairExpiration
 
             DataAccess.DecreaseAddressBalance(from);
 
-            Events.RaiseTransfer(from, to, tokenId);
+            Events.RaiseLend(from, to, tokenId, expiration);
 
             return true;
         }
