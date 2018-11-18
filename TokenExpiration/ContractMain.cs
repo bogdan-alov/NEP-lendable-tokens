@@ -262,7 +262,7 @@ namespace TransfairExpiration
                 return 0;
             }
 
-            //Determine whether the total amount is exceeded
+            //TODO: Determine whether the total amount is exceeded
             byte[] tokenaId = Storage.Get(Storage.CurrentContext, Keys.KeyAllSupply);
 
             byte[] tokenId = DataAccess.GetTotalSupplyAsBytes();
@@ -279,7 +279,7 @@ namespace TransfairExpiration
             DataAccess.SetTotalSupply(tokenId);
 
             BigInteger index = DataAccess.IncreaseAddressBalance(owner);
-            DataAccess.SetNextTokenOfOwner(owner, index, nextTokenId);
+            DataAccess.SetTokenOfOwnerAtIndex(owner, index, nextTokenId);
 
             return tokenId.AsBigInteger();
         }
@@ -306,16 +306,20 @@ namespace TransfairExpiration
                 return false;
             }
 
+            return Transfer(from, to, tokenId, token);
+        }
+
+        public static bool Transfer(byte[] from, byte[] to, byte[] tokenId, TokenInfo token) { 
             token.Owner = to;
 
             DataAccess.SetToken(tokenId, token);
             DataAccess.RemoveApproval(tokenId);
 
             var index = DataAccess.IncreaseAddressBalance(to);
-            DataAccess.SetNextTokenOfOwner(to, index, tokenId.AsBigInteger());
+            DataAccess.SetTokenOfOwnerAtIndex(to, index, tokenId.AsBigInteger());
 
-            DataAccess.DecreaseAddressBalance(from); //TODO: fix decrease
-            //TODO: set last token of from address at the free space of the lent token (in the owner.index storage)
+            var currentBalance = DataAccess.DecreaseAddressBalance(from);
+            DataAccess.ShiftLastTokenOfOwnerToTransferedTokenIndex(from, tokenId.AsBigInteger(), currentBalance + 1);
             
             Events.RaiseTransfer(from, to, tokenId);
 
@@ -345,7 +349,7 @@ namespace TransfairExpiration
 
             Events.RaiseLend(from, to, tokenId, expiration);
 
-            Transfer(from, to, tokenId);           
+            Transfer(from, to, tokenId, token);           
 
             return true;
         }

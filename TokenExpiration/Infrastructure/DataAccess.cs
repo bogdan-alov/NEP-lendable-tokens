@@ -23,7 +23,7 @@ namespace TransfairExpiration
         }
 
         /// <summary>
-        /// Get the index of the first gladiator information owned by an address.
+        /// Get the index of the first token owned by an address.
         /// </summary>
         public static byte[] GetOwnersTokenIdByIndexAsBytes(byte[] owner, BigInteger index)
         {
@@ -66,7 +66,7 @@ namespace TransfairExpiration
             return currentBalance;
         }
 
-        public static void DecreaseAddressBalance(byte[] address)
+        public static BigInteger DecreaseAddressBalance(byte[] address)
         {
             byte[] key = Keys.AddressBalanceKey(address);
             byte[] currentBalanceBytes = Storage.Get(Storage.CurrentContext, key);
@@ -82,7 +82,9 @@ namespace TransfairExpiration
                 currentBalance = 0;
             }
 
-            Storage.Put(Storage.CurrentContext, address, currentBalance.AsByteArray());
+            Storage.Put(Storage.CurrentContext, key, currentBalance.AsByteArray());
+
+            return currentBalance;
         }
 
         public static void RemoveApproval(byte[] tokenId)
@@ -91,10 +93,29 @@ namespace TransfairExpiration
             Storage.Delete(Storage.CurrentContext, key);
         }
 
-        public static void SetNextTokenOfOwner(byte[] owner, BigInteger index, BigInteger tokenId)
+        public static void SetTokenOfOwnerAtIndex(byte[] owner, BigInteger index, BigInteger tokenId)
         {
             byte[] key = Keys.TokenOfOwner(owner, index);
             Storage.Put(Storage.CurrentContext, key, tokenId);
+        }
+
+        public static bool ShiftLastTokenOfOwnerToTransferedTokenIndex(byte[] owner, BigInteger tokenId, BigInteger lastIndex)
+        {
+            for (var index = 1; index <= lastIndex; index++)
+            {
+                var tokenIdAtIndex = DataAccess.GetOwnersTokenIdByIndexAsBytes(owner, index).AsBigInteger();
+                if (tokenIdAtIndex == tokenId)
+                {
+                    //TODO: optimize for last index - only delete is enough, and no need to "shift the last token" as it is the last one.
+                    var tokenIdAtLastIndex = DataAccess.GetOwnersTokenIdByIndexAsBytes(owner, lastIndex).AsBigInteger();
+                    DataAccess.SetTokenOfOwnerAtIndex(owner, index, tokenIdAtLastIndex); //set the lastTokenId to the index of the transfered token
+
+                    byte[] lastTokenKey = Keys.TokenOfOwner(owner, lastIndex);
+                    Storage.Delete(Storage.CurrentContext, lastTokenKey);
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

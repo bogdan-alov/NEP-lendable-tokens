@@ -4,7 +4,7 @@ import Aigle from "aigle";
 import * as _ from 'lodash';
 
 let neo = new NeoJs({
-    scriptHash: 'f837538ebaa0d5272e304edbf085175441beb82f' //token expiration #18.11.18
+    scriptHash: '77c810b540b328ef2f733b31fc3ed359f454cd56' //token expiration #18.11.18 fix decrease
 });
 
 let addressAsByteArray = neo.sc.ContractParam.byteArray(neo.config.myAddress, 'address');
@@ -73,9 +73,19 @@ describe("Token Expiration", function () {
                 let result = await neo.get('isLendActive', [tokenIds[1]]);
                 expect(result[0].value).toEqual('1');
             });
+
+            it('owner of lend token is other address', async () => {
+                let result = await neo.get('ownerOf', [tokenIds[1]]);
+                expect(result[0].value).toEqual(otherAddress.value);
+            });
+
+            it('balanceOf other address is 01', async () => {
+                let result = await neo.get('balanceOf', [otherAddress.value]);
+                expect(result[0].value).toEqual('01');
+            });
         });
 
-        describe('Lend short period and return', () => {
+        describe.skip('Lend short period and return', () => {
             before(async () => {
                 if(hasMinted) {
                     return;
