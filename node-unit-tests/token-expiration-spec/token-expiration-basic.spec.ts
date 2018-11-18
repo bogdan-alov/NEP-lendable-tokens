@@ -4,8 +4,9 @@ import Aigle from "aigle";
 import * as _ from 'lodash';
 
 let neo = new NeoJs({
-    scriptHash: '6d4b0074c7e46fc371281832e8575048740bfa8e' //token expiration #13.11.18/10:27 fixed ownerof
+    scriptHash: 'f837538ebaa0d5272e304edbf085175441beb82f' //token expiration #18.11.18
 });
+
 let addressAsByteArray = neo.sc.ContractParam.byteArray(neo.config.myAddress, 'address');
 let otherAddress = neo.sc.ContractParam.byteArray('Aea1mQwHmpBGU6Ss6Y2qX3hAX6jooKiXBX', 'address');
 let hasMinted = false;
@@ -16,7 +17,7 @@ describe("Token Expiration", function () {
 
         let result = await neo.get('totalSupply', []);
         if (result[0].value === '') {
-            console.log('MINTING 2 TOKENS!!!');
+            console.log('MINTING 4 TOKENS!!!');
             await neo.call('mintToken', [addressAsByteArray]);
             await neo.call('mintToken', [addressAsByteArray]);
             await neo.call('mintToken', [addressAsByteArray]);
@@ -59,6 +60,7 @@ describe("Token Expiration", function () {
                 if(hasMinted) {
                     return;
                 }
+                // console.log('Lending TOKEN #1');
                 // await neo.call('lend', [addressAsByteArray, otherAddress, tokenIds[1]]);
             });
 
@@ -78,7 +80,9 @@ describe("Token Expiration", function () {
                 if(hasMinted) {
                     return;
                 }
+                // console.log('Lending TOKEN #3');
                 // await neo.call('lend', [addressAsByteArray, otherAddress, tokenIds[3], -1]);
+                // console.log('ReturnToOwner TOKEN #3');
                 // await neo.call('returnToOwner', [tokenIds[3]]);
             });
 
