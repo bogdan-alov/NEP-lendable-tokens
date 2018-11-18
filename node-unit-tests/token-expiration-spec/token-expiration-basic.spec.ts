@@ -4,10 +4,10 @@ import Aigle from "aigle";
 import * as _ from 'lodash';
 
 let neo = new NeoJs({
-    scriptHash: '6d4b0074c7e46fc371281832e8575048740bfa8e' //token expiration #13.11.18/10:27 fixed ownerof
+    scriptHash: '12e08d4a291729d1be1009781b79c124574ad8b4' //token expiration #13.11.18/10:27 fixed ownerof
 });
 let addressAsByteArray = neo.sc.ContractParam.byteArray(neo.config.myAddress, 'address');
-let otherAddress = neo.sc.ContractParam.byteArray('Aea1mQwHmpBGU6Ss6Y2qX3hAX6jooKiXBX', 'address');
+let otherAddress = neo.sc.ContractParam.byteArray('AHZrkZtNB1n61vthphomGsrhd7deWMYBmi', 'address');
 let hasMinted = false;
 describe("Token Expiration", function () {
     this.timeout(50000);
@@ -16,7 +16,7 @@ describe("Token Expiration", function () {
 
         let result = await neo.get('totalSupply', []);
         if (result[0].value === '') {
-            console.log('MINTING 2 TOKENS!!!');
+            console.log('MINTING 4 TOKENS!!!');
             await neo.call('mintToken', [addressAsByteArray]);
             await neo.call('mintToken', [addressAsByteArray]);
             await neo.call('mintToken', [addressAsByteArray]);
@@ -59,17 +59,26 @@ describe("Token Expiration", function () {
                 if(hasMinted) {
                     return;
                 }
-                // await neo.call('lend', [addressAsByteArray, otherAddress, tokenIds[1]]);
+                // await neo.call('lend', [addressAsByteArray, otherAddress, '02']);
             });
 
             it('should not have active Lend on fresh token', async () => {
-                let result = await neo.get('isLendActive', [tokenIds[0]]);
+                let result = await neo.get('isLendActive', ['01']);
                 expect(result[0].value).toEqual('');
             });
 
             it('should have Lend active on Lent token', async () => {
-                let result = await neo.get('isLendActive', [tokenIds[1]]);
+                let result = await neo.get('isLendActive', ['02']);
                 expect(result[0].value).toEqual('1');
+            });
+
+            it('owner of lend token is other address', async () => {
+                let result = await neo.get('ownerOf', ['02']);
+                expect(result[0].value).toEqual(otherAddress.value);
+            });
+            it('balanceOf other address is 01', async () => {
+                let result = await neo.get('balanceOf', [otherAddress.value]);
+                expect(result[0].value).toEqual('01');
             });
         });
 
@@ -78,27 +87,27 @@ describe("Token Expiration", function () {
                 if(hasMinted) {
                     return;
                 }
-                // await neo.call('lend', [addressAsByteArray, otherAddress, tokenIds[3], -1]);
-                // await neo.call('returnToOwner', [tokenIds[3]]);
+                // await neo.call('lend', [addressAsByteArray, otherAddress, '04', -1]);
+                // await neo.call('returnToOwner', ['04']);
             });
 
             it('should not have active Lend on fresh token', async () => {
-                let result = await neo.get('isLendActive', [tokenIds[0]]);
+                let result = await neo.get('isLendActive', ['01']);
                 expect(result[0].value).toEqual('');
             });
 
             it('should still have lend on long token', async () => {
-                let result = await neo.get('isLendActive', [tokenIds[1]]);
+                let result = await neo.get('isLendActive', ['02']);
                 expect(result[0].value).toEqual('1');
             });
 
             it('should not have active Lend on returned token', async () => {
-                let result = await neo.get('isLendActive', [tokenIds[3]]);
+                let result = await neo.get('isLendActive', ['04']);
                 expect(result[0].value).toEqual('');
             });
 
             it('returned token should have the ownerOf the original owner', async () => {
-                let result = await neo.get('ownerOf', [tokenIds[3]]);
+                let result = await neo.get('ownerOf', ['04']);
                 expect(result[0].value).toEqual(addressAsByteArray.value);
             });
         });
