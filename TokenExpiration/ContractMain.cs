@@ -160,7 +160,7 @@ namespace TransfairExpiration
             TokenInfo token = DataAccess.GetToken(tokenId);
           
             var nowtime = Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp;
-            if (nowtime > token.LendExpiration)
+            if (nowtime > token.LendExpiration || token.Owner == token.OriginalOwner)
             {
                 return false;
             }

@@ -4,7 +4,7 @@ import Aigle from "aigle";
 import * as _ from 'lodash';
 
 let neo = new NeoJs({
-    scriptHash: '5d8f516101a6bac12b0e10ac9a8b68c78050314c' //token expiration #13.11.18/10:27 fixed ownerof
+    scriptHash: '6787cccc527207d928e01b32c6b98c4860bfddfd' //token expiration #13.11.18/10:27 fixed ownerof
 });
 let addressAsByteArray = neo.sc.ContractParam.byteArray(neo.config.myAddress, 'address');
 let otherAddress = neo.sc.ContractParam.byteArray('AHZrkZtNB1n61vthphomGsrhd7deWMYBmi', 'address');
@@ -59,7 +59,7 @@ describe("Token Expiration", function () {
                 if(hasMinted) {
                     return;
                 }
-                // await neo.call('lend', [addressAsByteArray, otherAddress, '02']);
+               // await neo.call('lend', [addressAsByteArray, otherAddress, '02']);
             });
 
             it('should not have active Lend on fresh token', async () => {
