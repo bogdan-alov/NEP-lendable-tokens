@@ -19,7 +19,7 @@ On the flipside an owner of a "scarce" NFT's can rent their resources for a peri
 
 ==Specification==
 
-We introduce 3 more methods to the NFT (NEP 11) standard, as well as one more property to the NFT token:
+We introduce 3 methods as extension to the NFT (NEP 11) standard, as well as one property added to the NFT token:
 
 ===Methods===
 
@@ -47,18 +47,17 @@ We introduce 3 more methods to the NFT (NEP 11) standard, as well as one more pr
 
 ==Rationale==
 
-The rationale fleshes out the specification by describing what motivated the design and why particular design decisions were made. It should describe alternate designs that were considered and related work, e.g. how the feature is supported in other languages.
-
-The rationale may also provide evidence of consensus within the community, and should discuss important objections or concerns raised during discussion.
+Simple and clean design, usefull also as a code template for NEP-10 tokens written in .NET.
 
 ==Backwards Compatibility==
 
-All NEPs that introduce backwards incompatibilities must include a section describing these incompatibilities and their severity. The NEP must explain how the author proposes to deal with these incompatibilities. NEP submissions without a sufficient backwards compatibility treatise may be rejected outright.
+Provides full compatibilitiy with the NEP-10 standart
 
 ==Test Cases==
 
-Test cases for an implementation are mandatory for NEPs that are affecting consensus changes. Other NEPs can choose to include links to test cases if applicable.
+Test cases in javascript and npm demonstrating how a token is minterd, transfered, lended and returned back to owner.
 
+https://github.com/bogdanalov/NEP-lendable-tokens/tree/master/node-unit-tests
 ==Implementation==
 
 https://github.com/bogdanalov/NEP-lendable-tokens
